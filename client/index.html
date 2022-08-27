@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Boiler plate Header -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat</title>
+
+</head>
+
+<body>
+
+    <div id="list"></div>
+    <form>
+        <input type="text" placeholder="Your message...">
+    </form>
+    <script>
+
+        const socket = new WebSocket("ws://localhost:9090");
+
+        socket.addEventListener('open', function (event) {
+            console.log("connection established!")
+            socket.send("Hi, Client Connected!")
+        });
+
+        socket.addEventListener('message', function (event) {
+            console.log('Message from Server: ', event.data)
+
+            var list = document.getElementById("list")
+            var item = document.createElement("li")
+
+            item.innerHTML = event.data
+
+            list.appendChild(item)
+        });
+
+        document.querySelector('form').onsubmit = ev => {
+            ev.preventDefault()
+            const input = document.querySelector('input')
+            socket.send(input.value)
+        }
+
+    </script>
+
+</body>
+
+</html>
