@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
 var connections map[*websocket.Conn]bool = make(map[*websocket.Conn]bool)
+
+var mu sync.Mutex
 
 func main() {
 
@@ -29,9 +32,14 @@ func main() {
 
 		connections[conn] = true
 
-		defer conn.Close()
+		defer func() {
+			mu.Lock()
+			delete(connections, conn)
+			mu.Unlock()
 
-		defer delete(connections, conn)
+			conn.Close()
+
+		}()
 
 		// LOOP LOGIC
 		for {
