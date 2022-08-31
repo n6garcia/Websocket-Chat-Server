@@ -34,8 +34,8 @@ func (pool *Pool) Listen() {
 		case message := <-pool.Broadcast:
 			for client := range pool.Clients {
 				client.Conn.WriteMessage(message.Type, []byte(message.Body))
-
 			}
+
 		}
 	}
 }
