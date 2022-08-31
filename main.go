@@ -4,22 +4,22 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
-var connections map[*websocket.Conn]bool = make(map[*websocket.Conn]bool)
-
-var mu sync.Mutex
-
 func main() {
 
 	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
 	}
+
+	pool := NewPool()
+	go pool.Listen()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)
@@ -27,43 +27,20 @@ func main() {
 			log.Print("upgrade:", err)
 		}
 
-		fmt.Printf("%T\n", conn)
 		fmt.Printf("Connection Established...\n")
 
-		connections[conn] = true
-
-		defer func() {
-			mu.Lock()
-			delete(connections, conn)
-			mu.Unlock()
-
-			conn.Close()
-
-		}()
-
-		// PROBLEM: possiblity of concurrent writing to
-		// sockets produces ERROR, MUST FIX
-
-		// LOOP LOGIC
-		for {
-			messageType, p, err := conn.ReadMessage()
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
-			log.Println(string(p))
-
-			for c := range connections {
-				if err := c.WriteMessage(messageType, p); err != nil {
-					log.Println(err)
-					return
-				}
-			}
+		client := &Client{
+			Conn: conn,
+			Pool: pool,
 		}
+
+		pool.Register <- client
+
+		client.Read()
+
 	})
 
-	fmt.Println("server running!")
 	log.Fatal(http.ListenAndServe(":9090", nil))
+	fmt.Println("server running!")
 
 }
