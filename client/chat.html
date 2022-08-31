@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Boiler plate Header -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat</title>                        
+</head>
+
+<body>
+
+      <h1>Chat Server</h1>
+
+      <div id="list"></div>
+      <form>
+          <input type="text" placeholder="Your message...">
+      </form>
+      <script>
+
+        //const socket = new WebSocket("wss://noeldev.site/websoc");
+        const socket = new WebSocket("ws://localhost:9090");
+        const socket2 = new WebSocket("ws://localhost:9090");
+
+        socket.addEventListener('open', function (event) {
+            console.log("connection established!")
+        });
+
+        socket.addEventListener('message', function (event) {
+            console.log('Message from Server: ', event.data)
+
+            var list = document.getElementById("list")
+            var item = document.createElement("div")
+
+            item.innerHTML = "anon: " + event.data
+
+            list.appendChild(item)
+        });
+
+        async function sendMsgAsync(input, i) {
+          socket.send(input.value + i)
+          socket2.send("test" + i)
+        }
+
+        document.querySelector('form').onsubmit = ev => {
+            ev.preventDefault()
+            const input = document.querySelector('input')
+            for (let i = 0; i < 20; i++) {
+              sendMsgAsync(input, i)
+            }
+            input.value = ""
+        }
+
+      </script>
+
+</body>
+
+</html>

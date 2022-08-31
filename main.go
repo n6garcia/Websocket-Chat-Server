@@ -41,6 +41,9 @@ func main() {
 
 		}()
 
+		// PROBLEM: possiblity of concurrent writing to
+		// sockets produces ERROR, MUST FIX
+
 		// LOOP LOGIC
 		for {
 			messageType, p, err := conn.ReadMessage()
